@@ -125,7 +125,7 @@ class Vis_Eye_Video_Overlay(Plugin):
         show only 1 or 2 or both eyes
         features updated by Andrew June 2015
     """
-    def __init__(self,g_pool,alpha=0.6,eye_scale_factor=.5,move_around=0,mirror={'0':False,'1':False}, flip={'0':False,'1':False},pos=[(640,10),(10,10)], show_ellipses=True):
+    def __init__(self,g_pool,alpha=0.6,eye_scale_factor=.5,move_around=0,mirror={'0':False,'1':False}, flip={'0':False,'1':False},pos=[(640,10),(10,10)], show_ellipses=True, recording=True):
         super().__init__(g_pool)
         self.order = .6
         self.menu = None
@@ -180,6 +180,11 @@ class Vis_Eye_Video_Overlay(Plugin):
             self.alive = False
             return
 
+        # Log overlay position to file.
+        self.recording = recording
+        self.record_file = open(os.path.join(g_pool.rec_dir,'overlay.log'), 'w')
+        self.record_file.write('Timestamp,eye_index,X,Y\n')
+
     def unset_alive(self):
         self.alive = False
 
@@ -205,6 +210,8 @@ class Vis_Eye_Video_Overlay(Plugin):
             self.menu.append(ui.Switch('1',self.mirror,label="Eye 2: Horiz Flip"))
             self.menu.append(ui.Switch('1',self.flip,label="Eye 2: Vert Flip"))
         self.menu.append(ui.Switch('show_ellipses', self, label="Visualize Ellipses"))
+
+        self.menu.append(ui.Switch('recording', self, label="Recording"))
 
 
     def set_showeyes(self,new_mode):
@@ -288,6 +295,10 @@ class Vis_Eye_Video_Overlay(Plugin):
             # 5. finally overlay the image
             x, y = int(self.pos[eye_index][0]), int(self.pos[eye_index][1])
             transparent_image_overlay((x, y), eyeimage, frame.img, self.alpha)
+
+            # XXX: Records position to file.
+            if self.recording:
+                self.record_file.write('%s,%d,%d,%d\n' % (self.eye_frames[eye_index].timestamp, eye_index, x, y))
 
     def on_click(self,pos,button,action):
         if self.move_around == 1 and action == 1:
