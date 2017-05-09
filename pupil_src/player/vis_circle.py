@@ -12,6 +12,7 @@ See COPYING and COPYING.LESSER for license details.
 from player_methods import transparent_circle
 from plugin import Plugin
 import numpy as np
+import os
 
 # TODO: Import pyglui
 from pyglui import ui
@@ -21,7 +22,7 @@ from methods import denormalize
 class Vis_Circle(Plugin):
     uniqueness = "not_unique"
 
-    def __init__(self, g_pool,radius=20,color=(0.0,0.7,0.25,0.2),thickness=2,fill=True):
+    def __init__(self, g_pool,radius=20,color=(0.0,0.7,0.25,0.2),thickness=2,fill=True, recording=True):
         super().__init__(g_pool)
         self.order = .9
 
@@ -36,16 +37,23 @@ class Vis_Circle(Plugin):
         self.thickness = thickness
         self.fill = fill
 
+        self.recording = recording
+        self.record_file = open(os.path.join(g_pool.rec_dir,'overlay.log'), 'w')
+        print ("storage: ", g_pool.rec_dir)
+        self.record_file.write('Timestamp,X,Y\n')
+
     def update(self,frame,events):
         if self.fill:
             thickness = -1
         else:
             thickness = self.thickness
 
-        pts = [denormalize(pt['norm_pos'],frame.img.shape[:-1][::-1],flip_y=True) for pt in events.get('gaze_positions',[]) if pt['confidence']>=self.g_pool.min_data_confidence]
-        for pt in pts:
+        pts = [(denormalize(pt['norm_pos'],frame.img.shape[:-1][::-1],flip_y=True), pt['timestamp']) for pt in events.get('gaze_positions',[]) if pt['confidence']>=self.g_pool.min_data_confidence]
+        for pt, ts in pts:
             transparent_circle(frame.img, pt, radius=self.radius, color=(self.b, self.g, self.r, self.a), thickness=thickness)
 
+            if self.recording:
+                self.record_file.write('%f,%f,%f\n' % (ts, pt[0], pt[1]))
     def init_gui(self):
         # initialize the menu
         self.menu = ui.Scrolling_Menu('Gaze Circle')
@@ -64,6 +72,8 @@ class Vis_Circle(Plugin):
         color_menu.append(ui.Slider('b',self,min=0.0,step=0.05,max=1.0,label='Blue'))
         color_menu.append(ui.Slider('a',self,min=0.0,step=0.05,max=1.0,label='Alpha'))
         self.menu.append(color_menu)
+
+        self.menu.append(ui.Switch('recording', self, label="Recording"))
 
 
     def deinit_gui(self):
