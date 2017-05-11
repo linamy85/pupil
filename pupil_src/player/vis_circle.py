@@ -48,12 +48,12 @@ class Vis_Circle(Plugin):
         else:
             thickness = self.thickness
 
-        pts = [(denormalize(pt['norm_pos'],frame.img.shape[:-1][::-1],flip_y=True), pt['timestamp'], pt['confidence']) for pt in events.get('gaze_positions',[]) if pt['confidence']>=self.g_pool.min_data_confidence]
+        pts = [(denormalize(pt['norm_pos'],frame.img.shape[:-1][::-1],flip_y=True), pt['index'], pt['confidence']) for pt in events.get('gaze_positions',[]) if pt['confidence']>=self.g_pool.min_data_confidence]
         for pt, ts, conf in pts:
             transparent_circle(frame.img, pt, radius=self.radius, color=(self.b, self.g, self.r, self.a), thickness=thickness)
 
             if self.recording:
-                self.record_file.write('%f,%f,%f,%f\n' % (ts, conf, pt[0], pt[1]))
+                self.record_file.write('%d,%f,%f,%f\n' % (ts, conf, pt[0], pt[1]))
     def init_gui(self):
         # initialize the menu
         self.menu = ui.Scrolling_Menu('Gaze Circle')

@@ -17,7 +17,7 @@ def main():
         line = file.readline()
         while line:
             x = line[:-1].split(',', 2)
-            logs.add((float(x[0]), float(x[1]), x[2]))
+            logs.add((int(x[0]), float(x[1]), x[2]))
             line = file.readline()
     
     logs = list(logs)
@@ -27,7 +27,7 @@ def main():
     with open(output_file, 'w') as file:
         file.write(header)
         for ts, conf, pt in logs:
-            file.write('%f,%f,%s\n' % (ts, conf, pt))
+            file.write('%d,%f,%s\n' % (ts, conf, pt))
 
 
 if __name__ == '__main__':
